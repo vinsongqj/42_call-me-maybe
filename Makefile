@@ -16,7 +16,7 @@ debug:
 
 clean:
 	@echo "$(YELLOW)Cleaning build files...$(RESET)"
-	@rm -rf __pycache__ src/__pycache__ tests/__pycache__ llm_sdk/llm_sdk/llm_sdk/__pycache__ .mypy_cache .pytest_cache data/output
+	@rm -rf __pycache__ src/__pycache__ tests/__pycache__ llm_sdk/llm_sdk/llm_sdk/__pycache__ tests/.mypy_cache .mypy_cache .pytest_cache data/output
 
 lint:
 	uv run flake8 src/
