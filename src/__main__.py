@@ -3,7 +3,7 @@ import json
 import sys
 import os
 import numpy as np
-from llm_sdk import Small_LLM_Model
+from llm_sdk import Small_LLM_Model  # type: ignore[attr-defined]
 
 from src.grammar import TrieJSONRulebook
 from src.tokenizer import CustomTokenizer
@@ -12,17 +12,33 @@ from src.parser import parse_function_schemas
 
 
 def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Call Me Maybe")
-    parser.add_argument("--functions_definition", type=str, default="data/input/functions_definition.json")
-    parser.add_argument("--input", type=str, default="data/input/function_calling_tests.json")
-    parser.add_argument("--output", type=str, default="data/output/function_calling_results.json")
+    parser = argparse.ArgumentParser(
+        description="Call Me Maybe"
+    )
+    parser.add_argument(
+        "--functions_definition",
+        type=str,
+        default="data/input/functions_definition.json"
+    )
+    parser.add_argument(
+        "--input",
+        type=str,
+        default="data/input/function_calling_tests.json"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="data/output/function_calling_results.json"
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_arguments()
 
-    if not os.path.exists(args.functions_definition) or not os.path.exists(args.input):
+    func_def_exists = os.path.exists(args.functions_definition)
+    input_exists = os.path.exists(args.input)
+    if not func_def_exists or not input_exists:
         return
 
     output_dir = os.path.dirname(args.output)
@@ -42,14 +58,18 @@ def main() -> None:
     schema_metadata = parse_function_schemas(functions_data)
     model = Small_LLM_Model()
     vocab_path = model.get_path_to_vocab_file()
+    tokenizer = CustomTokenizer(vocab_path)
     results = []
 
     for idx, item in enumerate(prompts_data):
         prompt_text = item.get("prompt", "")
-        print(f"\n--- Processing prompt {idx + 1}/{len(prompts_data)}: {prompt_text} ---", flush=True)
+        msg = (
+            f"\n Processing prompt "
+            f"{idx + 1}/{len(prompts_data)}: {prompt_text}"
+        )
+        print(msg, flush=True)
 
         rulebook = TrieJSONRulebook(schema_metadata)
-        tokenizer = CustomTokenizer(vocab_path)
 
         system_prompt = (
             f"Functions schemas:\n{json.dumps(functions_data)}\n\n"
@@ -58,11 +78,10 @@ def main() -> None:
         )
 
         raw_encoded = model.encode(system_prompt)
-        input_ids = (
-            raw_encoded.cpu().numpy().flatten().tolist()
-            if hasattr(raw_encoded, "cpu")
-            else np.array(raw_encoded).flatten().tolist()
-        )
+        if hasattr(raw_encoded, "cpu"):
+            input_ids = raw_encoded.cpu().numpy().flatten().tolist()
+        else:
+            input_ids = np.array(raw_encoded).flatten().tolist()
 
         for token_step in range(150):
             normalized_text = "".join(rulebook.text_so_far.split())
@@ -103,10 +122,15 @@ def main() -> None:
                 f"Masked: {DIM}{masked_count:<5}{RESET} | "
                 f"State: {YELLOW}{repr(rulebook.text_so_far)}{RESET}"
             )
-            
+
             normalized_text = "".join(rulebook.text_so_far.split())
             if normalized_text.endswith("}}"):
-                print(f"   [Complete ] Final Structural Closure Confirmed: {repr(rulebook.text_so_far)}")
+                msg = (
+                    f"   \n{GREEN}Final Structural "
+                    f"Closure Confirmed: {RESET}"
+                    f"{repr(rulebook.text_so_far)}"
+                )
+                print(msg)
                 tokenizer.print_telemetry()
                 break
 
@@ -131,7 +155,7 @@ def main() -> None:
                 parameters=normalized_params
             )
             results.append(validated.model_dump())
-            print(f"✅ Success: Generated {validated.name}")
+            print(f"✅ {GREEN}Success: Generated {validated.name}{RESET}")
 
         except Exception as e:
             print(f"❌ Failed to parse for query: {prompt_text}")

@@ -2,13 +2,16 @@ from typing import Dict, List, Tuple
 
 
 class TrieJSONRulebook:
-    def __init__(self, schema_metadata: Dict[str, List[Tuple[str, str]]]) -> None:
+    def __init__(
+        self,
+        schema_metadata: Dict[str, List[Tuple[str, str]]]
+    ) -> None:
         self.schema: Dict[str, List[Tuple[str, str]]] = schema_metadata
         self.text_so_far: str = ""
 
     def get_allowed_characters(self) -> List[str]:
         normalized_text = "".join(self.text_so_far.split())
-        
+
         if normalized_text.endswith("}}"):
             return []
 
@@ -25,7 +28,7 @@ class TrieJSONRulebook:
         if text.startswith(prefix_target):
             after_name_key = text[9:]
             quote_idx = after_name_key.find('"')
-            
+
             if quote_idx == -1:
                 prefix = after_name_key
                 allowed = []
@@ -37,7 +40,7 @@ class TrieJSONRulebook:
                         else:
                             allowed.append('"')
                 return list(set(allowed))
-            
+
             func_name = after_name_key[:quote_idx]
             if func_name not in self.schema:
                 return []
@@ -52,14 +55,14 @@ class TrieJSONRulebook:
             if after_func.startswith(expected_mid):
                 remaining = after_func[len(expected_mid):]
                 params = self.schema[func_name]
-                
+
                 ptr = 0
                 for idx, (p_name, p_type) in enumerate(params):
                     expected_key = f'"{p_name}":'
-                    
+
                     if ptr == len(remaining):
                         return [expected_key]
-                        
+
                     if remaining[ptr:].startswith(expected_key):
                         ptr += len(expected_key)
                     else:
@@ -81,7 +84,10 @@ class TrieJSONRulebook:
                             if remaining[k] == '"':
                                 backslash_count = 0
                                 back_k = k - 1
-                                while back_k >= ptr and remaining[back_k] == '\\':
+                                while (
+                                    back_k >= ptr and
+                                    remaining[back_k] == '\\'
+                                ):
                                     backslash_count += 1
                                     back_k -= 1
                                 if backslash_count % 2 == 0:
@@ -91,12 +97,16 @@ class TrieJSONRulebook:
                         if found_close:
                             ptr = close_idx + 1
                         else:
-                            return [chr(c) for c in range(32, 127) if chr(c) != '"'] + ['"']
+                            text_chars = [
+                                chr(c) for c in range(32, 127)
+                                if chr(c) != '"'
+                            ]
+                            return text_chars + ['"']
                     else:
                         expected_end = ',' if idx < len(params) - 1 else '}'
                         num_chars = "0123456789.-eE+"
                         end_found = False
-                        
+
                         for k in range(ptr, len(remaining)):
                             if remaining[k] == expected_end:
                                 if k > ptr:
@@ -106,7 +116,7 @@ class TrieJSONRulebook:
                                 return []
                             elif remaining[k] not in num_chars:
                                 return []
-                                
+
                         if end_found:
                             ptr += 1
                         else:
@@ -135,12 +145,12 @@ class TrieJSONRulebook:
                 if remaining[ptr:] == '}':
                     return []
                 return []
-                
+
         return []
 
     def can_walk_token(self, token_string: str) -> bool:
         original_text = self.text_so_far
-        
+
         for char in token_string:
             allowed = self.get_allowed_characters()
             if not allowed or char not in allowed:
