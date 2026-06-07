@@ -5,10 +5,10 @@ import os
 import numpy as np
 from llm_sdk import Small_LLM_Model
 
-from src.constraints import TrieJSONRulebook
-from src.vocab_utils import CustomTokenizer
-from src.schemas import FunctionCallResult
-from src.generator_utils import get_schema_metadata
+from src.grammar import TrieJSONRulebook
+from src.tokenizer import CustomTokenizer
+from src.validator import FunctionCallResult
+from src.parser import parse_function_schemas
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -35,21 +35,21 @@ def main() -> None:
         with open(args.input, "r", encoding="utf-8") as f:
             prompts_data = json.load(f)
     except json.JSONDecodeError as e:
-        print(f"Error: One of the input JSON configuration files is malformed!")
+        print("Error: One of the input JSON configuration files is malformed!")
         print(f"Details: {e}")
         sys.exit(1)
 
-    schema_metadata = get_schema_metadata(functions_data)
+    schema_metadata = parse_function_schemas(functions_data)
     model = Small_LLM_Model()
     vocab_path = model.get_path_to_vocab_file()
-    tokenizer = CustomTokenizer(vocab_path)
     results = []
 
     for idx, item in enumerate(prompts_data):
         prompt_text = item.get("prompt", "")
-        print(f"--- Processing prompt {idx + 1}/{len(prompts_data)}: {prompt_text} ---", flush=True)
+        print(f"\n--- Processing prompt {idx + 1}/{len(prompts_data)}: {prompt_text} ---", flush=True)
 
         rulebook = TrieJSONRulebook(schema_metadata)
+        tokenizer = CustomTokenizer(vocab_path)
 
         system_prompt = (
             f"Functions schemas:\n{json.dumps(functions_data)}\n\n"
@@ -98,20 +98,16 @@ def main() -> None:
             DIM = "\033[2m"
             RESET = "\033[0m"
             print(
-                    f"   [Step {token_step:03d}] "
-                    f"Allowed: {GREEN}{len(allowed_token_ids):<5}{RESET} | "
-                    f"Masked: {DIM}{masked_count:<5}{RESET} | "
-                    f"State: {YELLOW}{repr(rulebook.text_so_far)}{RESET}"
-                 )
+                f"   [Step {token_step:03d}] "
+                f"Allowed: {GREEN}{len(allowed_token_ids):<5}{RESET} | "
+                f"Masked: {DIM}{masked_count:<5}{RESET} | "
+                f"State: {YELLOW}{repr(rulebook.text_so_far)}{RESET}"
+            )
+            
             normalized_text = "".join(rulebook.text_so_far.split())
             if normalized_text.endswith("}}"):
-                print(f"   [Complete ] Final Structural Closure Confirmed.")
+                print(f"   [Complete ] Final Structural Closure Confirmed: {repr(rulebook.text_so_far)}")
                 tokenizer.print_telemetry()
-                break
-
-            normalized_text = "".join(rulebook.text_so_far.split())
-            if normalized_text.endswith("}}"):
-                print(f"   [Complete ] Final Structural Closure Achieved: {repr(rulebook.text_so_far)}")
                 break
 
         try:
@@ -138,7 +134,7 @@ def main() -> None:
             print(f"✅ Success: Generated {validated.name}")
 
         except Exception as e:
-            print(f"Failed to parse for query: {prompt_text}")
+            print(f"❌ Failed to parse for query: {prompt_text}")
             print(f"Raw text: {repr(rulebook.text_so_far)}")
             print(f"Error details: {e}\n")
             continue

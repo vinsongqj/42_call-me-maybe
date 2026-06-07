@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Tuple
 
 
-def get_schema_metadata(functions_data: List[Dict[str, Any]]) -> Dict[str, List[Tuple[str, str]]]:
+def parse_function_schemas(functions_data: List[Dict[str, Any]]) -> Dict[str, List[Tuple[str, str]]]:
     metadata = {}
     for fn in functions_data:
         name = fn.get("name", "")

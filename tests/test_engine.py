@@ -5,9 +5,9 @@ from typing import Dict
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.constraints import TrieJSONRulebook
-from src.vocab_utils import CustomTokenizer
-from src.generator_utils import get_schema_metadata
+from src.grammar import TrieJSONRulebook
+from src.tokenizer import CustomTokenizer
+from src.parser import parse_function_schemas
 
 
 class TestGuidedDecodingEngine(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestGuidedDecodingEngine(unittest.TestCase):
             }
         ]
 
-        self.schema_metadata = get_schema_metadata(self.raw_functions_data)
+        self.schema_metadata = parse_function_schemas(self.raw_functions_data)
         self.rulebook = TrieJSONRulebook(self.schema_metadata)
 
         self.vocab_data: Dict[str, int] = {
