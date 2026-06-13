@@ -83,7 +83,7 @@ def main() -> None:
         else:
             input_ids = np.array(raw_encoded).flatten().tolist()
 
-        for token_step in range(150):
+        for token_step in range(300):
             normalized_text = "".join(rulebook.text_so_far.split())
             if normalized_text.endswith("}}"):
                 break

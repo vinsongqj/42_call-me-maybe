@@ -102,6 +102,38 @@ class TrieJSONRulebook:
                                 if chr(c) != '"'
                             ]
                             return text_chars + ['"']
+                    elif p_type == "boolean":
+                        expected_end = ',' if idx < len(params) - 1 else '}'
+                        bool_true = "true"
+                        bool_false = "false"
+                        written = remaining[ptr:]
+
+                        if bool_true.startswith(written):
+                            next_true = (
+                                [bool_true[len(written)]]
+                                if len(written) < len(bool_true)
+                                else [expected_end]
+                            )
+                        else:
+                            next_true = []
+
+                        if bool_false.startswith(written):
+                            next_false = (
+                                [bool_false[len(written)]]
+                                if len(written) < len(bool_false)
+                                else [expected_end]
+                            )
+                        else:
+                            next_false = []
+
+                        allowed_bool = list(set(next_true + next_false))
+                        if not allowed_bool:
+                            return []
+
+                        if written in (bool_true, bool_false):
+                            ptr += len(written)
+                        else:
+                            return allowed_bool
                     else:
                         expected_end = ',' if idx < len(params) - 1 else '}'
                         num_chars = "0123456789.-eE+"

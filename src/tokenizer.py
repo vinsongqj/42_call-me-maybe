@@ -12,8 +12,8 @@ class CustomTokenizer:
             self.vocab[int(token_id)] = token_str
 
         self._mask_cache: Dict[str, List[int]] = {}
-        self.cache_hits = 0
-        self.cache_misses = 0
+        self.cache_hits: int = 0
+        self.cache_misses: int = 0
 
     def decode_single_token(self, token_id: int) -> str:
         raw_piece = self.vocab.get(token_id, "")
@@ -58,6 +58,8 @@ class CustomTokenizer:
         print(msg)
 
 
-def get_allowed_token_ids(vocab_json_path: str, rulebook: Any) -> List[int]:
+def get_allowed_token_ids(
+    vocab_json_path: str, rulebook: Any
+) -> List[int]:
     tokenizer = CustomTokenizer(vocab_json_path)
     return tokenizer.get_allowed_token_ids(rulebook)
