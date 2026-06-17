@@ -20,3 +20,4 @@ If you would like to run the program manually, you may input the following comma
 1. Install the dependencies using ``uv sync``
 2. Run the program using ``uv run python -m src``
 ## Resources
+https://www.instagram.com/reels/DWyPEO3DwNe/
