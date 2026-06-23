@@ -111,7 +111,7 @@ Place your input files in `data/input/`:
 
 ## Algorithm explanation
 
-A greedy constrained decoding loop is used with a grammar-based token mask. Here is the pipeline for each prompt:
+A greedy constrained decoding loop is used with a grammar-based token mask. The pipeline follows these steps:
 
 1. **Schema parsing** -  `parse_function_schemas()` converts `functions_definition.json` into a compact `{function_name: [(param, type), ...]}` lookup used by the grammar engine.
 
