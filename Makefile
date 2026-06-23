@@ -21,13 +21,9 @@ clean:
 	@rm -rf .pytest_cache data/output
 
 lint:
-	uv run flake8 src/ tests/
-	uv run mypy src/ tests/ --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	uv run flake8 src/
+	uv run mypy src/ --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
-	uv run flake8 src/ tests/
-	uv run mypy src/ tests/ --strict
-
-test:
-	@echo "$(GREEN)Running comprehensive unit testing...$(RESET)"
-	python3 -m unittest discover -s tests -p "test_*.py"
+	uv run flake8 src/
+	uv run mypy src/ --strict

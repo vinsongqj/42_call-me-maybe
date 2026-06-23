@@ -12,6 +12,18 @@ from src.parser import parse_function_schemas
 
 
 def parse_arguments() -> argparse.Namespace:
+    """Parse and return command-line arguments.
+
+    Defines three optional arguments for overriding the default input/output
+    file paths.  All paths default to locations inside ``data/``.
+
+    Returns:
+        A :class:`argparse.Namespace` containing:
+            - ``functions_definition`` (str): path to the function schemas
+             JSON.
+            - ``input`` (str): path to the prompts JSON.
+            - ``output`` (str): path where results will be written.
+    """
     parser = argparse.ArgumentParser(
         description="Call Me Maybe"
     )
@@ -34,12 +46,35 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Run the constrained-decoding function-calling pipeline.
+
+    Loads function schemas and natural-language prompts from disk, then for
+    each prompt runs a token-by-token greedy generation loop guided by a
+    ``TrieJSONRulebook`` grammar mask.  Valid results are validated with
+    Pydantic and written to the output JSON file.
+
+    The program exits with a clear error message if:
+        - Either input file is missing or unreadable.
+        - Either input file contains malformed JSON.
+
+    Individual prompt failures (parse errors, schema mismatches) are logged
+    and skipped without terminating the run.
+    """
     args = parse_arguments()
 
     func_def_exists = os.path.exists(args.functions_definition)
     input_exists = os.path.exists(args.input)
     if not func_def_exists or not input_exists:
-        return
+        missing = []
+        if not func_def_exists:
+            missing.append(args.functions_definition)
+        if not input_exists:
+            missing.append(args.input)
+        print(
+            "Error: The following required input file(s) were not found:\n"
+            + "\n".join(f"  - {p}" for p in missing)
+        )
+        sys.exit(1)
 
     output_dir = os.path.dirname(args.output)
     if output_dir and not os.path.exists(output_dir):
@@ -58,7 +93,7 @@ def main() -> None:
     schema_metadata = parse_function_schemas(functions_data)
     model = Small_LLM_Model()
     vocab_path = model.get_path_to_vocab_file()
-    tokenizer = CustomTokenizer(vocab_path)
+    tokenizer = CustomTokenizer(vocab_json_path=vocab_path)
     results = []
 
     for idx, item in enumerate(prompts_data):
@@ -155,6 +190,8 @@ def main() -> None:
                 parameters=normalized_params
             )
             results.append(validated.model_dump())
+            GREEN = "\033[92m"
+            RESET = "\033[0m"
             print(f"✅ {GREEN}Success: Generated {validated.name}{RESET}")
 
         except Exception as e:
