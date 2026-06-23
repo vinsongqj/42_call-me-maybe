@@ -148,8 +148,8 @@ A greedy constrained decoding loop is used with a grammar-based token mask. Here
 
 | Metric | Target | Notes |
 |---|---|---|
-| JSON validity | 100% | Guaranteed by grammar mask; every output is parseable |
-| Function selection accuracy | ≥ 90% | Determined by the LLM; constrained decoding does not interfere with name selection |
+| JSON validity | 100% | Guaranteed by grammar mask since every output is parseable |
+| Function selection accuracy | ≥ 90% | Determined by the LLM, constrained decoding does not interfere with name selection |
 | Processing time | ~ 30 seconds | Tested using ``time make run`` for the default `data/input/function_calling_tests.json` provided with the project |
 | Cache hit rate | ~80 % | Tested by recalling the same prompt 5 consecutive times |
 
@@ -157,7 +157,28 @@ A greedy constrained decoding loop is used with a grammar-based token mask. Here
 
 ## Challenges faced
 
+- Understanding the jargon necessary to tackle this project (weights, tokens, logits, masks, etc.)
+- Installing the LLM dependencies (too large to install on campus provided iMacs).
+- Mapping tokens to characters because the model's vocabulary uses byte-pair encoding, so certain special characters had to be normalized before use.
+- Wrangling the output to fit the targeted schemas.
+
 ## Testing strategy
 
+- **End-to-End Validation** - The pipeline is validated against the provided functions_definition.json and function_calling_tests.json, ensuring that for every natural language prompt, the output JSON structure conforms to the expected function schema.
+
+- **Schema Integrity** - By enforcing constraints via the TrieJSONRulebook at the character level, the LLM is physically unable to generate malformed JSON, eliminating the need for post-generation structural validation tests.
+
+- **Performance Profiling** - Telemetry is used to monitor the engine's behavior under different schemas, ensuring that latency and cache-hit rates remain within expected bounds during high-frequency token generation.
+
+---
+
 ## Resources
-https://www.instagram.com/reels/DWyPEO3DwNe/
+
+[HackerRank - Data Structures: Tries](https://youtu.be/zIjfhVPRZCg?si=SXCiSeMgBoo13OBM)
+[A random Instagram reel](https://www.instagram.com/reels/DWyPEO3DwNe/)
+
+### Disclosure of AI use
+
+To be honest, I get overwhelmed by documentation, and there were very few reliable resources I could find on YouTube to learn about the subjects required for this project, so I had to rely mostly on AI as a teacher to guide me through this project.
+
+Claude and Gemini were used to solidify my understanding about the topic, assisting in writing some sections of the readme, edge case detection and catching any issues I might have missed.
