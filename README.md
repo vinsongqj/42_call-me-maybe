@@ -175,6 +175,7 @@ A greedy constrained decoding loop is used with a grammar-based token mask. The 
 ## Resources
 
 [HackerRank - Data Structures: Tries](https://youtu.be/zIjfhVPRZCg?si=SXCiSeMgBoo13OBM)
+
 [A random Instagram reel](https://www.instagram.com/reels/DWyPEO3DwNe/)
 
 ### Disclosure of AI use
