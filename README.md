@@ -24,6 +24,7 @@ The system does not answer `42`. Instead it returns:
 ```
 
 The function is chosen by the model itself, constrained decoding only controls the structure of the output and not what output is chosen.
+
 ---
 
 ## Requirements
