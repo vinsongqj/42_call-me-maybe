@@ -172,6 +172,13 @@ A greedy constrained decoding loop is used with a grammar-based token mask. The 
 
 ---
 
+## Bonuses 
+
+- **Visualization of generation process** - A visualizer was made to show the generation process of each JSON output along with the cache hit rate and a completion indicator.
+- **Performance optimizations (caching)** - `_mask_cache` in `CustomTokenizer` memoizes unique tokens to prevent redundant walk operations.
+- **Support for complex nested function arguments** - `TrieJSONRulebook` in `grammar.py` explicitly handles recursive/nested schema structures. The grammar state machine tracks index pointers (ptr) through parameters and handles closing braces/brackets for nested objects, ensuring that complex, multi-parameter function calls are correctly enforced.
+- **Demonstration of how encoding and decoding integrate with constrained decoding** - the model's `raw_encoded` input IDs are fed into the generation loop, and at each step, `forced_logits` is calculated by applying a custom_mask derived from the grammar state.
+
 ## Resources
 
 - [HackerRank - Data Structures: Tries](https://youtu.be/zIjfhVPRZCg?si=SXCiSeMgBoo13OBM)
