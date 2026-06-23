@@ -132,19 +132,28 @@ A greedy constrained decoding loop is used with a grammar-based token mask. Here
 
 ## Design decisions
 
-**`TrieJSONRulebook` as a character-level state machine** — Rather than running a full JSON parser on every candidate token, the grammar tracks a single string `text_so_far` and exposes `get_allowed_characters()`, which returns the exact set of characters permitted at the current position. This makes validation O(text length) rather than O(vocab size × parse cost).
+- **`TrieJSONRulebook` as a character-level state machine** — Rather than running a full JSON parser on every candidate token, the grammar tracks a single string `text_so_far` and exposes `get_allowed_characters()`, which returns the exact set of characters permitted at the current position. This makes validation O(text length) rather than O(vocab size × parse cost).
  
-**Vocabulary cache in `CustomTokenizer`** - Scanning all vocabulary entries per generation step is intensive, so results are memoised by `text_so_far` string, ensuring each unique grammar state is only evaluated once.
+- **Vocabulary cache in `CustomTokenizer`** - Scanning all vocabulary entries per generation step is intensive, so results are memoised by `text_so_far` string, ensuring each unique grammar state is only evaluated once.
 
-**Greedy decoding (`argmax`) over sampling** - Since the grammar already constrains the output to a small allowed set, stochastic sampling would only add noise. Greedy selection picks the most likely valid token and converges faster.
+- **Greedy decoding (`argmax`) over sampling** - Since the grammar already constrains the output to a small allowed set, stochastic sampling would only add noise. Greedy selection picks the most likely valid token and converges faster.
 
-**Pydantic for output validation** - `FunctionCallResult` enforces the schema structure of the output JSON, making sure any irregularities are flagged as exceptions instead of silently being written to the output file.
+- **Pydantic for output validation** - `FunctionCallResult` enforces the schema structure of the output JSON, making sure any irregularities are flagged as exceptions instead of silently being written to the output file.
 
-**Forbidden dependencies** - `dspy`, `transformers`, `outlines`, PyTorch and Huggingface libraries are all excluded, Only `numpy`, `json` and `pydantic` are used, keeping the dependency requirements mininal and constrained decoding logic fully transparent.
+- **Forbidden dependencies** - `dspy`, `transformers`, `outlines`, PyTorch and Huggingface libraries are all excluded, Only `numpy`, `json` and `pydantic` are used, keeping the dependency requirements mininal and constrained decoding logic fully transparent.
 
 ---
 
 ## Performance analysis
+
+| Metric | Target | Notes |
+|---|---|---|
+| JSON validity | 100% | Guaranteed by grammar mask; every output is parseable |
+| Function selection accuracy | ≥ 90% | Determined by the LLM; constrained decoding does not interfere with name selection |
+| Processing time | ~ 30 seconds | Tested using ``time make run`` for the default `data/input/function_calling_tests.json` provided with the project |
+| Cache hit rate | ~80 % | Tested by recalling the same prompt 5 consecutive times |
+
+---
 
 ## Challenges faced
 
