@@ -105,7 +105,7 @@ class CustomTokenizer(BaseModel):
             A list of integer token IDs that the grammar allows at this step.
             Returns an empty list when no further tokens are permitted.
         """
-        cache_key = "".join(rulebook.text_so_far.split())
+        cache_key = rulebook.text_so_far
 
         if cache_key in self._mask_cache:
             self.cache_hits += 1
