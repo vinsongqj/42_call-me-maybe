@@ -136,7 +136,11 @@ class TrieJSONRulebook:
                             return allowed_bool
                     else:
                         expected_end = ',' if idx < len(params) - 1 else '}'
-                        num_chars = "0123456789.-eE+"
+                        num_chars = (
+                            "0123456789-"
+                            if p_type == "integer"
+                            else "0123456789.-eE+"
+                        )
                         end_found = False
 
                         for k in range(ptr, len(remaining)):
