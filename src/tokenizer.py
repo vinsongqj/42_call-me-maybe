@@ -5,19 +5,19 @@ from pydantic import BaseModel, field_validator
 
 
 class CustomTokenizer(BaseModel):
-    """Vocabulary-aware tokenizer with grammar-constrained token filtering.
+    """
+    Tokenizer with grammar-constrained token filtering.
 
     Loads a BPE vocabulary from a JSON file and exposes methods to decode
     individual token IDs to strings and to compute, for a given grammar
     state, the subset of token IDs that are structurally valid.
 
-    Results are memoised by grammar state string so that each unique state
-    is only evaluated once per prompt, significantly reducing wall-clock time.
+    Results are memoized by grammar state string so that each unique state
+    is only evaluated once per prompt, reducing compute time.
 
     Attributes:
         vocab_json_path: Path to the vocabulary JSON file
-            (``{token_string: token_id}`` mapping).
-        vocab: Inverted vocabulary mapping ``{token_id: token_string}``.
+        vocab: Inverted vocabulary mapping {token_id: token_string}.
         cache_hits: Number of times the mask cache was hit.
         cache_misses: Number of times the mask cache was missed.
     """
@@ -26,8 +26,6 @@ class CustomTokenizer(BaseModel):
     vocab: Dict[int, str] = {}
     cache_hits: int = 0
     cache_misses: int = 0
-
-    # Private cache — excluded from Pydantic fields via PrivateAttr pattern
     _mask_cache: Dict[str, List[int]] = {}
 
     model_config = {"arbitrary_types_allowed": True}
@@ -35,7 +33,8 @@ class CustomTokenizer(BaseModel):
     @field_validator("vocab_json_path")
     @classmethod
     def path_must_be_non_empty(cls, v: str) -> str:
-        """Validate that the vocabulary path is not an empty string.
+        """
+        Validate that the vocabulary path is not an empty string.
 
         Args:
             v: The file path to validate.
@@ -51,11 +50,12 @@ class CustomTokenizer(BaseModel):
         return v
 
     def model_post_init(self, __context: Any) -> None:
-        """Load and invert the vocabulary file after Pydantic initialisation.
+        """
+        Load and invert the vocabulary file after Pydantic initialisation.
 
-        Reads the JSON file at ``vocab_json_path``, inverts the
-        ``{token_string: token_id}`` mapping to ``{token_id: token_string}``,
-        and stores it in ``vocab``.  Also initialises the private mask cache.
+        Reads the JSON file at vocab_json_path, inverts the
+        {token_string: token_id} mapping to {token_id: token_string},
+        and stores it in vocab.  Also initialises the private mask cache.
 
         Args:
             __context: Pydantic post-init context (unused).
@@ -74,10 +74,11 @@ class CustomTokenizer(BaseModel):
         self._mask_cache = {}
 
     def decode_single_token(self, token_id: int) -> str:
-        """Decode a single token ID to its character string representation.
+        """
+        Decode a single token ID to its character string representation.
 
-        Handles BPE-specific encoding by replacing the ``Ġ`` symbol with a
-        regular space and ``Ċ`` with a newline character.
+        Handles BPE-specific encoding by replacing the Ġ symbol with a
+        regular space and Ċ with a newline character.
 
         Args:
             token_id: The integer token ID to decode.
@@ -90,15 +91,16 @@ class CustomTokenizer(BaseModel):
         return raw_piece.replace("Ġ", " ").replace("Ċ", "\n")
 
     def get_allowed_token_ids(self, rulebook: Any) -> List[int]:
-        """Return the list of token IDs that are valid at the current grammar
+        """
+        Returns the list of token IDs that are valid at the current grammar
         state.
 
-        Results are cached by ``rulebook.text_so_far``.  On a cache miss,
-        every entry in the vocabulary is tested via ``rulebook.can_walk_token``
+        Results are cached by rulebook.text_so_far.  On a cache miss,
+        every entry in the vocabulary is tested via rulebook.can_walk_token
         and only those that pass are returned.
 
         Args:
-            rulebook: A ``TrieJSONRulebook`` instance representing the current
+            rulebook: A TrieJSONRulebook instance representing the current
                 generation state.
 
         Returns:
@@ -128,7 +130,8 @@ class CustomTokenizer(BaseModel):
         return allowed_ids
 
     def print_telemetry(self) -> None:
-        """Print a cache performance summary to stdout.
+        """
+        Prints a cache performance summary to stdout.
 
         Displays the total number of cache hits, misses, and the resulting
         hit-rate percentage for the lifetime of this tokenizer instance.

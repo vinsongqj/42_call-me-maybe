@@ -2,14 +2,41 @@ from typing import Dict, List, Tuple
 
 
 class TrieJSONRulebook:
+    """
+    Enforces JSON schema constraints during text generation using a Trie.
+
+    The class maintains the current state of a generated string and determines
+    which characters are valid next steps based on a provided schema of
+    function definitions and their required parameters.
+
+    Attributes:
+        schema: A dictionary mapping function names to a list of tuples,
+            where each tuple contains a parameter name and its associated type.
+        text_so_far: The sequence of characters generated/processed thus far.
+    """
     def __init__(
         self,
         schema_metadata: Dict[str, List[Tuple[str, str]]]
     ) -> None:
+        """
+        Initializes the TrieJSONRulebook with a specific schema.
+
+        Args:
+            schema_metadata: A dictionary where keys are function names and
+                values are lists of (parameter_name, parameter_type) tuples.
+        """
         self.schema: Dict[str, List[Tuple[str, str]]] = schema_metadata
         self.text_so_far: str = ""
 
     def get_allowed_characters(self) -> List[str]:
+        """
+        Determines the valid next characters based on the current
+        text state.
+
+        Returns:
+            A list of single-character strings that are valid next inputs
+            given the current `text_so_far` and the enforced schema.
+        """
         normalized_text = "".join(self.text_so_far.split())
 
         if normalized_text.endswith("}}"):
@@ -185,6 +212,19 @@ class TrieJSONRulebook:
         return []
 
     def can_walk_token(self, token_string: str) -> bool:
+        """
+        Checks if a full token can be appended without violating the schema.
+
+        This method simulates appending the token string character-by-character
+        to verify if the entire sequence remains valid according to the
+        rulebook. It does not permanently modify the state.
+
+        Args:
+            token_string: The sequence of characters to validate.
+
+        Returns:
+            True if the entire token is valid, False otherwise.
+        """
         original_text = self.text_so_far
 
         for char in token_string:
@@ -198,4 +238,11 @@ class TrieJSONRulebook:
         return True
 
     def advance(self, token_string: str) -> None:
+        """
+        Permanently advances the internal state by appending a token.
+
+        Args:
+            token_string: The sequence of characters to append
+            to `text_so_far`.
+        """
         self.text_so_far += token_string

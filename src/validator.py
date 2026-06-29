@@ -4,11 +4,12 @@ from pydantic import BaseModel
 
 
 class FunctionCallResult(BaseModel):
-    """Validated result of a single LLM function-call generation.
+    """
+    Validates result of a single LLM function-call generation.
 
     Used to enforce field presence and type correctness before results are
     serialised to the output JSON file.  Pydantic will raise a
-    ``ValidationError`` at construction time if any field is missing or of
+    ValidationError at construction time if any field is missing or of
     the wrong type, surfacing schema violations early.
 
     Attributes:
@@ -16,7 +17,7 @@ class FunctionCallResult(BaseModel):
             function call.
         name: The name of the function the model selected to call.
         parameters: A mapping of parameter names to their values, with
-            numeric values normalised to ``float`` and all others to ``str``.
+            numeric values normalised to float and all others to str.
     """
 
     prompt: str

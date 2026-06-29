@@ -4,29 +4,27 @@ from typing import Any, Dict, List, Tuple
 def parse_function_schemas(
     functions_data: List[Dict[str, Any]]
 ) -> Dict[str, List[Tuple[str, str]]]:
-    """Convert a list of raw function definitions into a compact schema lookup.
-
-    Transforms the verbose JSON function definition format into a lightweight
-    mapping used by ``TrieJSONRulebook`` to enforce parameter ordering and
+    """
+    Simplifies the JSON function definition format to hand to
+    TrieJSONRulebook to enforce parameter ordering and
     typing during constrained decoding.
 
     Args:
         functions_data: A list of function definition dicts, each containing
-            at minimum a ``"name"`` key and a ``"parameters"`` dict whose
-            values have a ``"type"`` field (e.g. ``"string"``, ``"number"``,
-            ``"boolean"``).
+            a 'name' key and a 'parameters' dict whose
+            values have a 'type' field like strings, numbers or bools
 
     Returns:
         A dict mapping each function name to an ordered list of
-        ``(parameter_name, parameter_type)`` tuples reflecting the order in
-        which parameters appear in the definition.
+        (parameter_name, parameter_type) tuples reflecting the order in
+        which parameters appear in the definition
 
-    Example::
+    Example:
 
-        >>> data = [{"name": "fn_add", "parameters": {"a": {"type": "number"},
-        ...
-          "b": {"type": "number"}}}]
-        >>> parse_function_schemas(data)
+        data = [{"name": "fn_add", "parameters": {"a": {"type": "number"},
+                "b": {"type": "number"}}}]
+
+        parse_function_schemas(data) returns:
         {'fn_add': [('a', 'number'), ('b', 'number')]}
     """
     metadata: Dict[str, List[Tuple[str, str]]] = {}

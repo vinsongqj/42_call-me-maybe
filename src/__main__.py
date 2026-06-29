@@ -12,17 +12,18 @@ from src.parser import parse_function_schemas
 
 
 def parse_arguments() -> argparse.Namespace:
-    """Parse and return command-line arguments.
+    """
+    Parses and returns command-line arguments.
 
     Defines three optional arguments for overriding the default input/output
-    file paths.  All paths default to locations inside ``data/``.
+    file paths. All paths default to locations inside data/.
 
     Returns:
-        A :class:`argparse.Namespace` containing:
-            - ``functions_definition`` (str): path to the function schemas
+        A argparse.Namespace containing:
+            - functions_definition (str): path to the function schemas
              JSON.
-            - ``input`` (str): path to the prompts JSON.
-            - ``output`` (str): path where results will be written.
+            - input (str): path to the prompts JSON.
+            - output (str): path where results will be written.
     """
     parser = argparse.ArgumentParser(
         description="Call Me Maybe"
@@ -46,19 +47,25 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
-    """Run the constrained-decoding function-calling pipeline.
+    """
+    Runs the constrained decoding pipeline.
 
-    Loads function schemas and natural-language prompts from disk, then for
-    each prompt runs a token-by-token greedy generation loop guided by a
-    ``TrieJSONRulebook`` grammar mask.  Valid results are validated with
-    Pydantic and written to the output JSON file.
+    It starts by:
+    1. Reading the command line arguments
+    2. Guarding against missing files
+    3. Preparing the output directory
+    4. Loading both JSON files in
+    5. One time setup of:
+        - Converting JSON schema into the format grammar.py needs using
+          parse_function_schemas()
+        - Loading the LLM into memory by calling Small_LLM_Model()
+        - Inverting {string: id} to {id : string} with CustomTokenizer()
+    6. Looping each prompt for idx, item in enumerate(prompts_data)
+    7. Building and encoding the prompt
+    8. Running the token generation loop
+    9. Parsing output with Pydantic for type safety checking
+    10. Writing to output file
 
-    The program exits with a clear error message if:
-        - Either input file is missing or unreadable.
-        - Either input file contains malformed JSON.
-
-    Individual prompt failures (parse errors, schema mismatches) are logged
-    and skipped without terminating the run.
     """
     args = parse_arguments()
 
@@ -179,10 +186,20 @@ def main() -> None:
 
             parsed = json.loads(clean_json_str)
             raw_params = parsed.get("parameters", {})
-            normalized_params = {
-                k: float(v) if isinstance(v, (int, float)) else str(v)
-                for k, v in raw_params.items()
+            func_name = parsed.get("name", "")
+            param_types = {
+                p_name: p_type
+                for p_name, p_type in schema_metadata.get(func_name, [])
             }
+            normalized_params: dict[str, int | float | str] = {}
+            for k, v in raw_params.items():
+                p_type = param_types.get(k, "string")
+                if p_type == "integer":
+                    normalized_params[k] = int(v)
+                elif p_type == "number":
+                    normalized_params[k] = float(v)
+                else:
+                    normalized_params[k] = str(v)
 
             validated = FunctionCallResult(
                 prompt=prompt_text,
